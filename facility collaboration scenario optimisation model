@@ -41,46 +41,19 @@ Model_PCost(sz) =0;
 
 Parameter
 
-pobcdc      overall distribution coefficient for stability/0.844/
-FiT         FiT rate for biogas or biomass electricity  /79.6/
-
-pomcapex     /274400.736/
-chpcapex     /0/
-porcapex     / 0/
-pipecapex    /335646.342/
-etranscapex   /89.287392/
-adcmax       /0.5/
-adcmin       /-0.5/
-crf          /0.096/
 fcbaseelec(fc) /por      1/
-
-fcgpinc(fc)  /
-pom       171210
-chp       176938
-por       167007
-/
-
-fcepbase(fc)     /
-
-pom       74476470
-chp       411398
-por       2774959
-/
-
-fcgpdis(fc)  /
-
-pom       74922080
-chp       588393
-por      2941967
-/
-
 GEF grid emission factor kgCO2e per MWH /543/
 metcomp /0.65/
 metrec /0.85/
+p11eff      kernel sep efficiency  / 0.8505 /
+ECHPS       Enthalpy of HPS (kJ per kg)  / 2858 /
+ECFW        Enthalpy of FW (MJ per kg)  / 104.92 /
 AOT         annual operating hours /  4350  /
+FiT         FiT rate for biogas or biomass electricity  /79.6/
 dpomchp     distance between pom-chp (m) /500/
 dpompor     distance between pom-por (m) /500/
 dchppor     distance between chp-por (m) /500/
+crf         capital recovery rate /0.096/
 uetranscost  capital cost for transmission line (USD per km per MW) /967/
 cpocost     corrected to 0.23 RMtoUSD conversion /1012.115/
 fcapfc(fc)  Miscellaneous fixed capital for CHP facility (USD) 450000 /chp      0/
@@ -926,11 +899,6 @@ pobcpres(fc)
 pobcmat(i)
 pobcsgres(i)
 fcelec(fc)
-ycpom(fc)
-ycchp(fc)
-ycpor(fc)
-ycpipe(fc)
-ycetrans(fc)
 ;
 
 variables
@@ -948,11 +916,6 @@ aprofit
 profit
 grossp
 fctotalcapex(fc)
-fcaddinv(fc)
-pobcaddinv
-fcdc(fc)
-fcep(fc)
-pobcep
 ;
 
 
@@ -1051,21 +1014,6 @@ fcproduct(i,fc)
 pobcexcesselecbal
 fccapexbal(fc)
 chpcapbal
-pobcaddinvbal
-fcaddinvbal(fc)
-fcadcbal(fc)
-fcadcbal2(fc)
-ycpombal
-ycchpbal
-ycporbal
-ycpipebal
-ycetransbal
-fcepbal(fc)
-pobcepbal
-eplimit(fc)
-fcadcbal3(fc)
-fcadcbal4(fc)
-exeleclim(fc)
 ;
 
 resbal(i)..               res(i)=e=sum((p),sgres(i,p))+ exres(i);
@@ -1147,28 +1095,13 @@ objEP..                   obj('6') =e= ep;
 fccapexbal(fc)..          fctotalcapex(fc) =e= crf*((sum(p,newcap(p)*ucapex(p)*pexist_AUX(p)*pfac(fc,p)))+ ynewfc(fc)*fcapfc(fc));
 chpcapbal..               sum(p,cap(p)*pexist_AUX(p)*pfac('chp',p)) =l= alpha*ynewfc('chp');
 capcost..                 capex =e= sum(p,newcap(p)*ucapex(p)*pexist_AUX(p)) + totalpipecost + etranscost + ynewfc('chp')*fcapfc('chp');
-eplimit(fc)..             fcep(fc) =g= fcepbase(fc);
-fcepbal(fc)..             fcep(fc) =e= fcgpdis(fc) - fcaddinv(fc);
-fcadcbal(fc)..            fcgpinc(fc) =l= (adcmax + 1)*pobcdc*fcaddinv(fc);
-fcadcbal2(fc)..           fcgpinc(fc) =g= (adcmin + 1)*pobcdc*fcaddinv(fc);
-fcadcbal3(fc)..           fcexpelec(fc) =l= alpha*ycetrans(fc);
-fcadcbal4(fc)..           sum(int,intflow(int)) =l= alpha*ycpipe(fc);
-pobcaddinvbal..           pobcaddinv =e= crf*capex;
-pobcepbal..               pobcep =e= sum(fc,fcep(fc));
-fcaddinvbal(fc)..         fcaddinv(fc) =e= ycpom(fc)*pomcapex + ycchp(fc)*chpcapex + ycpor(fc)*porcapex + ycpipe(fc)*pipecapex + ycetrans(fc)*etranscapex;
-ycpombal..                sum(fc,ycpom(fc)) =e= 1;
-ycchpbal..                sum(fc,ycchp(fc)) =e= 1;
-ycporbal..                sum(fc,ycpor(fc)) =e= 1;
-ycpipebal..               sum(fc,ycpipe(fc)) =e= 1;
-ycetransbal..             sum(fc,ycetrans(fc)) =e= 1;
-exeleclim(fc)..               fcexelec(fc) =l= fcbaseelec(fc)*fcelecdem(fc);
+
 
 
 option optcr = 0;
 MODEL pobc/ALL/;
 
 loop(sz,
-IF(ord(sz)> 6,
 pexist_AUX(p) = pexist(p,sz);
 bypass_AUX(p) = bypass(p,sz);
 pfirst_AUX = pfirst(sz);
@@ -1187,23 +1120,11 @@ SOLVE pobc MAXIMISING z using MIP ;
          Model_PCost(sz) = totalpipecost.L;
 
 Display Model_Objective;
-Display fcaddinv.L;
-
-
-else
-
-pexist_AUX(p) = pexist(p,sz);
-bypass_AUX(p) = bypass(p,sz);
-pfirst_AUX = pfirst(sz);
-exprores_AUX(i) = exprores(i,sz);
-addbyind_AUX(i) = addbyind(i,sz);
-maxwfp_AUX = maxwfp(sz) ;
-maxghg_AUX = maxghg(sz);
-maxmat_AUX(i,p) = maxmat(i,p,sz) ;
-minmat_AUX(i,p) = minmat(i,p,sz) ;
-
-SOLVE pobc MAXIMISING z using MIP ;
-
-      );
+Display Model_EP;
+Display Model_ECost;
+Display Model_PCost;
+Display fctotalcapex.L;
+Display capex.L;
 
 );
+
