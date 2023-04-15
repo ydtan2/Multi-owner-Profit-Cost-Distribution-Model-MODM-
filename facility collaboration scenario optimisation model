@@ -1084,7 +1084,7 @@ annualprofit..            aprofit =e= AOT*(profit - eleccost + elecrev)  ;
 revenue(i)..              price(i)*pro(i)=e= rev(i);
 rescost(i)..              urcost(i)*exres(i)=e= cost(i);
 grossprofit..             grossp =e= aprofit - opex ;
-opcost..                  opex =e= sum(p,cap(p)*uopex(p)*pexist_AUX(p))- MCF*(totalpipecost + etranscost);
+opcost..                  opex =e= sum(p,cap(p)*uopex(p)*pexist_AUX(p)) + MCF*(totalpipecost + etranscost);
 GPBAL..                   finalgp =e= grossp - AOT*sum(i,extcost(i)) ;
 ecopotential..            ep =e= finalgp - (crf*capex) ;
 etranscostbal..           etranscost =e= sum(fc,uetranscost*(dpompor/1000)*fcexpelec(fc)) ;
